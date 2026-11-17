@@ -50,6 +50,7 @@ textarea{resize:vertical}
 .scheda-deg .riga>label{flex:none;width:94px;margin:0;padding-top:10px;font-family:Georgia,serif;font-size:.95rem;font-weight:700;color:var(--oro2)}
 .scheda-deg textarea{border:0;background:transparent;padding:9px 0;resize:none;overflow:hidden;min-height:40px;line-height:1.4;border-radius:0}
 .scheda-deg textarea:focus{outline:0;background:transparent}
+textarea.riga-auto{resize:none;overflow:hidden;min-height:44px;line-height:1.35}
 .suffisso{position:relative}.suffisso input{padding-right:58px}
 .suffisso span{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none}
 .f.dedotto input,.f.dedotto textarea{border-style:dashed;border-color:var(--oro2)}
@@ -179,32 +180,31 @@ nav.tabbar{display:none}
 
       <fieldset>
         <legend>Identità e tipologia</legend>
-        <div class="grid g21">
-          <div class="f" data-k="produttore"><label for="produttore">Produttore</label><input id="produttore" placeholder="Mastroberardino"></div>
-          <div class="f" data-k="annata"><label for="annata">Annata</label><input id="annata" inputmode="numeric" maxlength="4" placeholder="2019"></div>
-        </div>
         <div class="grid">
-          <div class="f" data-k="nomeVino"><label for="nomeVino">Nome del vino / Etichetta</label><input id="nomeVino" placeholder="Radici Riserva"></div>
+          <div class="f" data-k="produttore"><label for="produttore">Produttore</label><textarea id="produttore" class="riga-auto" rows="1" placeholder="Mastroberardino"></textarea></div>
+          <div class="f" data-k="nomeVino"><label for="nomeVino">Nome del vino / Etichetta</label><textarea id="nomeVino" class="riga-auto" rows="1" placeholder="Radici Riserva"></textarea></div>
+        </div>
+        <div class="grid g2">
+          <div class="f" data-k="annata"><label for="annata">Annata</label><input id="annata" inputmode="numeric" maxlength="4" placeholder="2019"></div>
+          <div class="f" data-k="gradoAlcolico"><label for="gradoAlcolico">Grado alc.</label><div class="suffisso"><input id="gradoAlcolico" inputmode="decimal" placeholder="14"><span>% vol</span></div></div>
         </div>
         <div class="grid">
           <div class="f" data-k="tipologia"><label>Tipologia</label><div class="chips" id="tipoChips"></div><input type="hidden" id="tipologia"></div>
-        </div>
-        <div class="grid g21">
           <div class="f" data-k="vitigni"><label for="vitigni">Vitigno / Uvaggio</label><input id="vitigni" placeholder="Aglianico 100%"></div>
-          <div class="f" data-k="gradoAlcolico"><label for="gradoAlcolico">Grado alc.</label><div class="suffisso"><input id="gradoAlcolico" inputmode="decimal" placeholder="14"><span>% vol</span></div></div>
         </div>
       </fieldset>
 
       <fieldset>
         <legend>Origine</legend>
-        <div class="grid g3">
+        <div class="grid g2">
           <div class="f" data-k="nazione"><label for="nazione">Nazione</label><input id="nazione" placeholder="Italia"></div>
           <div class="f" data-k="regione"><label for="regione">Regione</label><input id="regione" placeholder="Campania"></div>
           <div class="f" data-k="provincia"><label for="provincia">Provincia</label><input id="provincia" placeholder="AV"></div>
+          <div class="f" data-k="comune"><label for="comune">Comune</label><input id="comune" placeholder="Montefredane"></div>
         </div>
-        <div class="grid g2">
-          <div class="f" data-k="denominazione"><label for="denominazione">Zona / Denominazione</label><input id="denominazione" placeholder="Taurasi DOCG"></div>
-          <div class="f" data-k="sottozona"><label for="sottozona">Sottozona / Cru / Menzione</label><input id="sottozona" placeholder="Montemarano"></div>
+        <div class="grid">
+          <div class="f" data-k="denominazione"><label for="denominazione">Zona / Denominazione</label><textarea id="denominazione" class="riga-auto" rows="1" placeholder="Taurasi DOCG"></textarea></div>
+          <div class="f" data-k="sottozona"><label for="sottozona">Sottozona / Cru / Menzione</label><textarea id="sottozona" class="riga-auto" rows="1" placeholder="Vigna, cru, MGA…"></textarea></div>
         </div>
       </fieldset>
 
@@ -319,9 +319,9 @@ const $ = s => document.querySelector(s);
 const MODELLO_DEFAULT = 'claude-haiku-4-5';
 const TIPI = [['Rosso','#8E2A3B'],['Bianco','#E3CF83'],['Rosato','#EE9AA8'],['Bollicine','#D6B571'],['Dolce','#C27A2C']];
 const COLORE = Object.fromEntries(TIPI);
-const CAMPI = ['produttore','nomeVino','tipologia','annata','vitigni','gradoAlcolico','nazione','regione','provincia','denominazione','sottozona','dataDegustazione','luogo','voto','prezzo','noteVista','noteOlfatto','noteGusto','noteAltro','storiaProduttore','caratteristiche','noteClima'];
-const CAMPI_AI = ['produttore','nomeVino','tipologia','annata','vitigni','gradoAlcolico','nazione','regione','provincia','denominazione','sottozona','storiaProduttore','caratteristiche','noteClima'];
-const CAMPI_RICERCA = ['produttore','nomeVino','tipologia','annata','vitigni','nazione','regione','provincia','denominazione','sottozona','luogo','noteVista','noteOlfatto','noteGusto','noteAltro','note','storiaProduttore','caratteristiche'];
+const CAMPI = ['produttore','nomeVino','tipologia','annata','vitigni','gradoAlcolico','nazione','regione','provincia','comune','denominazione','sottozona','dataDegustazione','luogo','voto','prezzo','noteVista','noteOlfatto','noteGusto','noteAltro','storiaProduttore','caratteristiche','noteClima'];
+const CAMPI_AI = ['produttore','nomeVino','tipologia','annata','vitigni','gradoAlcolico','nazione','regione','provincia','comune','denominazione','sottozona','storiaProduttore','caratteristiche','noteClima'];
+const CAMPI_RICERCA = ['produttore','nomeVino','tipologia','annata','vitigni','nazione','regione','provincia','comune','denominazione','sottozona','luogo','noteVista','noteOlfatto','noteGusto','noteAltro','note','storiaProduttore','caratteristiche'];
 
 let db = null;
 if (window.Dexie) {
@@ -388,7 +388,11 @@ function setTipo(v) {
   $('#tipologia').value = v || '';
   document.querySelectorAll('#tipoChips .chip').forEach(c => c.classList.toggle('on', c.dataset.v === v));
 }
-function leggiForm() { const o = {}; for (const k of CAMPI) o[k] = $('#' + k).value.trim(); return o; }
+function leggiForm() {
+  const o = {};
+  for (const k of CAMPI) { const el = $('#' + k); o[k] = el.classList.contains('riga-auto') ? el.value.replace(/\s+/g, ' ').trim() : el.value.trim(); }
+  return o;
+}
 function scriviForm(v) {
   for (const k of CAMPI) $('#' + k).value = v?.[k] ?? '';
   if (v?.note && !v.noteAltro) $('#noteAltro').value = v.note;
@@ -407,7 +411,7 @@ function autoAltezza(t) {
   t.style.height = 'auto';
   t.style.height = t.scrollHeight + 'px';
 }
-function autoAltezzaTutte() { document.querySelectorAll('.scheda-deg textarea').forEach(autoAltezza); }
+function autoAltezzaTutte() { document.querySelectorAll('.scheda-deg textarea, textarea.riga-auto').forEach(autoAltezza); }
 function recordVuoto(extra) {
   return { ...Object.fromEntries(CAMPI.map(k => [k, ''])), fotoFronte: null, fotoRetro: null, campiDedotti: [],
     stato: 'pending', errore: '', uid: uid(), creato: Date.now(), aggiornato: Date.now(), ...extra };
@@ -479,7 +483,7 @@ async function elimina() {
 function promptAI() {
   return `Sei un sommelier esperto. Analizza le foto dell'etichetta (fronte e/o retro) di questa bottiglia di vino.
 Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo e senza markdown, con esattamente queste chiavi:
-{"produttore":"","nomeVino":"","tipologia":"","annata":"","vitigni":"","gradoAlcolico":"","nazione":"","regione":"","provincia":"","denominazione":"","sottozona":"","storiaProduttore":"","caratteristiche":"","noteClima":"","campiDedotti":[]}
+{"produttore":"","nomeVino":"","tipologia":"","annata":"","vitigni":"","gradoAlcolico":"","nazione":"","regione":"","provincia":"","comune":"","denominazione":"","sottozona":"","storiaProduttore":"","caratteristiche":"","noteClima":"","campiDedotti":[]}
 Regole:
 - tipologia: una sola tra "Rosso","Bianco","Rosato","Bollicine","Dolce" (Bollicine per spumanti, Champagne, Franciacorta, Prosecco ecc.; Dolce per passiti, muffati e vini dolci).
 - annata: solo l'anno a 4 cifre; "" se assente (es. spumanti senza annata).
@@ -487,7 +491,8 @@ Regole:
 - gradoAlcolico: solo il numero, senza simbolo % (es. "14" o "13,5").
 - provincia: per l'Italia la sigla (es. "AV"); per gli altri Paesi dipartimento o area, se noto.
 - denominazione: completa di sigla (es. "Taurasi DOCG", "Chablis AOC").
-- sottozona: sottozona, cru, MGA, vigna o menzione se presente, altrimenti "".
+- comune: il paese di origine (es. "Montefredane"), senza sigla della provincia. Usa il comune dei vigneti se indicato; altrimenti quello della cantina o dell'imbottigliatore, che in controetichetta è nell'indirizzo (es. "imbottigliato da … Montefredane (AV)"): in quel caso inserisci "comune" in campiDedotti.
+- sottozona: solo sottozona ufficiale, cru, MGA, vigna o menzione se presente, altrimenti "". Non metterci il comune.
 - campiDedotti: elenca le chiavi dei campi che NON hai letto sull'etichetta ma hai ricavato dalle tue conoscenze (es. regione o provincia ricavate dalla denominazione).
 - storiaProduttore: 3-4 frasi in italiano sulla cantina: fondazione, famiglia o proprietà, filosofia produttiva, vigneti e territorio. Se non conosci con sicurezza questo produttore, scrivi esattamente "Dato non verificato."
 - caratteristiche: 3-4 frasi in italiano sui vitigni (origine, caratteristiche viticole ed enologiche) e sullo stile tipico di questo vino e della sua denominazione (vinificazione e affinamento tipici, profilo, potenziale di invecchiamento, temperatura di servizio).
@@ -640,7 +645,7 @@ function cardHTML(r) {
       <h3><span class="dot" style="background:${col}" title="${esc(r.tipologia)}"></span>${esc(r.produttore || 'Produttore da definire')}</h3>
       <div class="sub">${esc([r.nomeVino, r.annata, normGrado(r.gradoAlcolico) && normGrado(r.gradoAlcolico) + '% vol'].filter(Boolean).join(' · '))}</div>
       <div class="meta">${esc([r.denominazione, r.sottozona].filter(Boolean).join(' · '))}</div>
-      <div class="meta">${esc([r.regione, r.nazione].filter(Boolean).join(', '))}${r.dataDegustazione ? ' · 🗓 ' + dataIt(r.dataDegustazione) : ''}</div>
+      <div class="meta">${esc([r.comune, r.regione, r.nazione].filter(Boolean).join(', '))}${r.dataDegustazione ? ' · 🗓 ' + dataIt(r.dataDegustazione) : ''}</div>
       ${badge}
     </div>
     ${r.voto ? `<span class="voto">${esc(r.voto)}</span>` : ''}
@@ -815,7 +820,7 @@ async function creaCard(r) {
   y += 6;
   const zona = [r.denominazione, r.sottozona].filter(Boolean).join(' · ');
   if (zona) { x.fillStyle = oro; x.font = '600 34px system-ui'; for (const l of aCapo(x, zona, W - 2 * M, 2)) { x.fillText(l, M, y); y += 44; } }
-  const luogo = [r.regione, r.nazione].filter(Boolean).join(', ');
+  const luogo = [r.comune, r.regione, r.nazione].filter(Boolean).join(', ');
   if (luogo) { x.fillStyle = 'rgba(245,236,215,.75)'; x.font = '32px system-ui'; x.fillText(luogo, M, y); y += 44; }
   // note
   const piede = H - 120;
@@ -954,7 +959,8 @@ async function init() {
     const f = e.target.closest('.f'); if (f && dedotti.delete(f.dataset.k)) marcaDedotti();
   });
   $('#gradoAlcolico').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^0-9.,]/g, ''); });
-  document.querySelectorAll('.scheda-deg textarea').forEach(t => t.addEventListener('input', () => autoAltezza(t)));
+  document.querySelectorAll('.scheda-deg textarea, textarea.riga-auto').forEach(t => t.addEventListener('input', () => autoAltezza(t)));
+  document.querySelectorAll('textarea.riga-auto').forEach(t => t.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); }));
   window.addEventListener('resize', autoAltezzaTutte);
   $('#form').addEventListener('submit', salva);
   $('#btnAI').addEventListener('click', compilaOra);
