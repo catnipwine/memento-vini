@@ -51,6 +51,14 @@ textarea{resize:vertical}
 .scheda-deg textarea{border:0;background:transparent;padding:9px 0;resize:none;overflow:hidden;min-height:40px;line-height:1.4;border-radius:0}
 .scheda-deg textarea:focus{outline:0;background:transparent}
 textarea.riga-auto{resize:none;overflow:hidden;min-height:44px;line-height:1.35}
+.anteprima{min-height:44px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--carta);cursor:pointer;font-size:.95rem;line-height:1.45}
+.anteprima .txt3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
+.anteprima .leggi{display:block;margin-top:4px;color:var(--oro2);font-weight:700;font-size:.85rem}
+.anteprima.nv .txt3,.testo-pieno.nv{color:var(--muted);font-style:italic}
+.f.dedotto .anteprima{border-style:dashed;border-color:var(--oro2)}
+#dlgTesto{margin:auto auto 0;width:100%;max-width:680px;max-height:88vh;border-radius:18px 18px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom))}
+@media(min-width:900px){#dlgTesto{margin:auto;border-radius:var(--r)}}
+.testo-pieno{max-height:62vh;overflow:auto;font-size:1.05rem;line-height:1.65;white-space:pre-wrap;font-family:Georgia,serif}
 .suffisso{position:relative}.suffisso input:placeholder-shown+span{display:none}.suffisso input{padding-right:58px}
 .suffisso span{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none}
 .f.dedotto input,.f.dedotto textarea{border-style:dashed;border-color:var(--oro2)}
@@ -220,9 +228,9 @@ nav.tabbar{display:none}
       <fieldset>
         <legend>Approfondimenti AI</legend>
         <div class="grid">
-          <div class="f" data-k="storiaProduttore"><label for="storiaProduttore">🏛 Storia del produttore</label><textarea id="storiaProduttore" rows="3"></textarea></div>
-          <div class="f" data-k="caratteristiche"><label for="caratteristiche">🍇 Vitigni e caratteristiche del vino</label><textarea id="caratteristiche" rows="3"></textarea></div>
-          <div class="f" data-k="noteClima"><label for="noteClima">🌦 Andamento climatico dell'annata</label><textarea id="noteClima" rows="3"></textarea></div>
+          <div class="f" data-k="storiaProduttore"><label for="storiaProduttore">🏛 Storia del produttore</label><div class="anteprima" data-for="storiaProduttore" role="button" tabindex="0"></div><textarea id="storiaProduttore" hidden></textarea></div>
+          <div class="f" data-k="caratteristiche"><label for="caratteristiche">🍇 Vitigni e caratteristiche del vino</label><div class="anteprima" data-for="caratteristiche" role="button" tabindex="0"></div><textarea id="caratteristiche" hidden></textarea></div>
+          <div class="f" data-k="noteClima"><label for="noteClima">🌦 Andamento climatico dell'annata</label><div class="anteprima" data-for="noteClima" role="button" tabindex="0"></div><textarea id="noteClima" hidden></textarea></div>
         </div>
       </fieldset>
 
@@ -313,6 +321,16 @@ nav.tabbar{display:none}
   <button type="button" class="btn ghost wide" id="rapSalta" hidden>Niente retro: salva così</button>
   <button type="button" class="btn pri wide" id="rapFine" style="margin-top:8px">Fine</button>
   <p class="hint">Ogni bottiglia viene salvata "⏳ in attesa". A fine giornata premi 🔄 Completa con AI.</p>
+</dialog>
+
+<dialog id="dlgTesto">
+  <div class="rap-head"><h2 id="testoTitolo" style="margin:0;font-size:1.15rem"></h2><button type="button" class="iconbtn" id="testoX" style="background:var(--crema);color:var(--blu)" aria-label="Chiudi">✕</button></div>
+  <div id="testoPieno" class="testo-pieno"></div>
+  <textarea id="testoEdit" rows="10" hidden></textarea>
+  <div class="row" style="margin-top:14px">
+    <button type="button" class="btn ghost" id="testoModifica">✏️ Modifica</button>
+    <button type="button" class="btn pri" id="testoChiudi">Chiudi</button>
+  </div>
 </dialog>
 
 <nav class="tabbar">
@@ -408,6 +426,7 @@ function scriviForm(v) {
   for (const k of CAMPI) $('#' + k).value = v?.[k] ?? '';
   if (v?.note && !v.noteAltro) $('#noteAltro').value = v.note;
   $('#gradoAlcolico').value = normGrado(v?.gradoAlcolico);
+  aggiornaAnteprime();
   autoAltezzaTutte(); // schede salvate con la versione precedente
   setTipo(v?.tipologia || '');
 }
@@ -423,6 +442,45 @@ function autoAltezza(t) {
   t.style.height = t.scrollHeight + 'px';
 }
 function autoAltezzaTutte() { document.querySelectorAll('.scheda-deg textarea, textarea.riga-auto').forEach(autoAltezza); }
+const NV = 'dato non verificato';
+function aggiornaAnteprime() {
+  document.querySelectorAll('.anteprima').forEach(a => {
+    const t = $('#' + a.dataset.for).value.trim();
+    a.classList.toggle('nv', norm(t).startsWith(NV));
+    a.innerHTML = t ? `<span class="txt3">${esc(t)}</span><span class="leggi">Leggi tutto ›</span>` : '';
+  });
+}
+let testoCampo = null;
+function apriTesto(k) {
+  testoCampo = k;
+  const t = $('#' + k).value.trim();
+  $('#testoTitolo').textContent = document.querySelector(`label[for="${k}"]`).textContent;
+  $('#testoPieno').textContent = t || 'Nessun testo. Premi ✏️ Modifica per scrivere.';
+  $('#testoPieno').classList.toggle('nv', !t || norm(t).startsWith(NV));
+  $('#testoPieno').hidden = false; $('#testoEdit').hidden = true;
+  $('#testoModifica').textContent = '✏️ Modifica';
+  $('#dlgTesto').showModal();
+  $('#testoPieno').scrollTop = 0;
+}
+function modificaTesto() {
+  const ed = $('#testoEdit');
+  if (ed.hidden) { // passa alla modifica
+    ed.value = $('#' + testoCampo).value; ed.hidden = false; $('#testoPieno').hidden = true;
+    $('#testoModifica').textContent = '✔︎ Applica'; ed.focus();
+  } else { // applica
+    const campo = $('#' + testoCampo);
+    if (campo.value !== ed.value) {
+      campo.value = ed.value; campo.dispatchEvent(new Event('input', { bubbles: true }));
+      aggiornaAnteprime(); toast('Modificato: ricordati di salvare la scheda');
+    }
+    $('#dlgTesto').close();
+  }
+}
+// stesso produttore anche se scritto in modo diverso ("Az. Agr. Villa Diamante" = "Villa Diamante")
+function chiaveProduttore(p) {
+  return norm(p).replace(/\b(azienda agricola|azienda vitivinicola|az\.? ?agr\.?|societa agricola|soc\.? ?agr\.?|s\.? ?r\.? ?l\.?|s\.? ?s\.?|s\.? ?a\.? ?s\.?|s\.? ?p\.? ?a\.?)(?=\s|$)/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ').trim();
+}
 function recordVuoto(extra) {
   return { ...Object.fromEntries(CAMPI.map(k => [k, ''])), fotoFronte: null, fotoRetro: null, campiDedotti: [],
     stato: 'pending', errore: '', uid: uid(), creato: Date.now(), aggiornato: Date.now(), ...extra };
@@ -500,6 +558,7 @@ function promptAI() {
 Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo e senza markdown, con esattamente queste chiavi:
 {"produttore":"","nomeVino":"","tipologia":"","annata":"","vitigni":"","gradoAlcolico":"","nazione":"","regione":"","provincia":"","comune":"","zona":"","denominazione":"","sottozona":"","storiaProduttore":"","caratteristiche":"","noteClima":"","lat":null,"lon":null,"campiDedotti":[]}
 Regole:
+- produttore: il nome della cantina nella forma breve e comune con cui è conosciuta (es. "Villa Diamante", "Mastroberardino", "La Sibilla"), senza diciture come "Azienda Agricola", "Az. Agr.", "Società Agricola", "Soc. Agr.", "S.r.l.", "S.s." se non fanno parte del nome commerciale.
 - tipologia: una sola tra "Rosso","Bianco","Rosato","Bollicine","Dolce" (Bollicine per spumanti, Champagne, Franciacorta, Prosecco ecc.; Dolce per passiti, muffati e vini dolci).
 - annata: solo l'anno a 4 cifre; "" se assente (es. spumanti senza annata).
 - vitigni: SOLO nomi di vitigni, con percentuali se indicate (es. "Aglianico 100%"). Se il nome della denominazione o l'etichetta contiene un vitigno (es. "Falanghina del Sannio", "Campania Falanghina IGP", "Fiano di Avellino", "Greco di Tufo"), quel vitigno va SEMPRE in vitigni. Se il vitigno non è scritto ma lo ricavi dalla denominazione (es. Taurasi → Aglianico), mettilo e inserisci "vitigni" in campiDedotti.
@@ -641,7 +700,7 @@ function chiaveGruppo(r, ord) {
     }
     case 'annata': return r.annata || 'Senza annata';
     case 'zona': return r.regione || r.nazione || 'Origine da definire';
-    case 'produttore': return r.produttore || 'Produttore da definire';
+    case 'produttore': return chiaveProduttore(r.produttore) || '';
     default: return null;
   }
 }
@@ -654,7 +713,7 @@ function confronta(ord) {
     zona: (a, b) => vuotoInFondo(a.regione || a.nazione, b.regione || b.nazione) || s(a.regione || a.nazione, b.regione || b.nazione) ||
       vuotoInFondo(a.zona || a.denominazione, b.zona || b.denominazione) || s(a.zona || a.denominazione, b.zona || b.denominazione) ||
       s(a.produttore, b.produttore) || (+b.annata || 0) - (+a.annata || 0),
-    produttore: (a, b) => vuotoInFondo(a.produttore, b.produttore) || s(a.produttore, b.produttore) || (+b.annata || 0) - (+a.annata || 0),
+    produttore: (a, b) => vuotoInFondo(chiaveProduttore(a.produttore), chiaveProduttore(b.produttore)) || s(chiaveProduttore(a.produttore), chiaveProduttore(b.produttore)) || (+b.annata || 0) - (+a.annata || 0),
     voto: (a, b) => (parseFloat(b.voto) || -1) - (parseFloat(a.voto) || -1),
     grado: (a, b) => gradoNum(b.gradoAlcolico) - gradoNum(a.gradoAlcolico)
   }[ord];
@@ -700,7 +759,9 @@ function render() {
         for (const [k2, l2] of raggruppa(l1, r => r.zona || r.denominazione || 'Zona da definire'))
           interno += gruppoHTML(k1 + '|' + k2, k2, l2.length, lista(l2), 'sub');
       } else interno = lista(l1);
-      html += gruppoHTML(ord + ':' + k1, k1, l1.length, interno, 'grp');
+      const titolo = ord !== 'produttore' ? k1 :
+        (l1.map(r => (r.produttore || '').trim()).filter(Boolean).sort((a, b) => a.length - b.length)[0] || 'Produttore da definire');
+      html += gruppoHTML(ord + ':' + k1, titolo, l1.length, interno, 'grp');
     }
   }
   $('#lista').innerHTML = html;
@@ -941,20 +1002,29 @@ async function importa(file) {
     const j = JSON.parse(await file.text());
     const arr = Array.isArray(j) ? j : j.vini;
     if (!Array.isArray(arr)) throw new Error('file non valido');
-    const esistenti = new Set(await db.vini.orderBy('uid').keys());
+    const esistenti = new Map((await db.vini.toArray()).map(r => [r.uid, r]));
     const nuovi = [];
-    let doppi = 0;
+    let doppi = 0, aggiornati = 0;
     for (const r of arr) {
       const { id, ...x } = r;
       if (!x.uid) x.uid = uid();
-      if (esistenti.has(x.uid)) { doppi++; continue; }
-      esistenti.add(x.uid);
       x.stato = x.stato || 'done';
+      const mio = esistenti.get(x.uid);
+      if (mio) {
+        // c'è già: la aggiorno solo se quella in arrivo è più recente
+        if ((x.aggiornato || 0) > (mio.aggiornato || 0)) { await db.vini.put({ ...x, id: mio.id }); mio.aggiornato = x.aggiornato; aggiornati++; }
+        else doppi++;
+        continue;
+      }
+      esistenti.set(x.uid, x);
       nuovi.push(x);
     }
     if (nuovi.length) await db.vini.bulkAdd(nuovi);
-    if (!nuovi.length) toast(doppi === 1 ? 'Questa bottiglia è già nella tua cantina' : 'Bottiglie già presenti nella tua cantina');
-    else toast((nuovi.length === 1 ? 'Importata 1 bottiglia' : `Importate ${nuovi.length} bottiglie`) + (doppi ? ` · ${doppi} già presenti` : ''));
+    const parti = [];
+    if (nuovi.length) parti.push(nuovi.length === 1 ? '1 bottiglia nuova' : `${nuovi.length} bottiglie nuove`);
+    if (aggiornati) parti.push(aggiornati === 1 ? '1 aggiornata' : `${aggiornati} aggiornate`);
+    if (doppi) parti.push(`${doppi} già uguali`);
+    toast(parti.length ? 'Import: ' + parti.join(' · ') : 'Niente da importare');
     await aggiorna();
   } catch (e) { toast('Import fallito: ' + e.message); }
 }
@@ -1007,6 +1077,14 @@ async function init() {
   $('#btnElimina').addEventListener('click', elimina);
   $('#btnCondividi').addEventListener('click', condividi);
   $('#btnRapido').addEventListener('click', apriRapido);
+  document.querySelectorAll('.anteprima').forEach(a => {
+    a.addEventListener('click', () => apriTesto(a.dataset.for));
+    a.addEventListener('keydown', e => { if (e.key === 'Enter') apriTesto(a.dataset.for); });
+  });
+  $('#testoModifica').addEventListener('click', modificaTesto);
+  $('#testoChiudi').addEventListener('click', () => $('#dlgTesto').close());
+  $('#testoX').addEventListener('click', () => $('#dlgTesto').close());
+  $('#dlgTesto').addEventListener('click', e => { if (e.target === $('#dlgTesto')) $('#dlgTesto').close(); });
   $('#fileGalleria').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) importaGalleria(f); });
   $('#rapLuogo').addEventListener('input', e => localStorage.setItem('mv_luogo', e.target.value.trim()));
   $('#rapInput').addEventListener('change', async e => {

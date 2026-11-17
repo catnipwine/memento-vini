@@ -1,6 +1,6 @@
 // Service worker di Memento Vini.
 // Quando modifichi index.html, aumenta il numero di versione qui sotto per forzare l'aggiornamento.
-const CACHE = 'memento-vini-v7';
+const CACHE = 'memento-vini-v8';
 const DEXIE = 'https://unpkg.com/dexie@4.0.8/dist/dexie.min.js';
 const INBOX = 'mv-inbox'; // file ricevuti con "Condividi → Memento Vini"
 const FILE_LOCALI =['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png'];
