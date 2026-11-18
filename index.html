@@ -129,8 +129,53 @@ dialog h2{margin-top:0;color:var(--blu)}
 .rap-thumbs{display:flex;gap:10px;align-items:center;margin-top:12px;min-height:20px}
 .rap-thumbs img{width:66px;height:88px;object-fit:cover;border-radius:8px;border:2px solid var(--oro)}
 
-/* barra in basso: solo telefono */
-nav.tabbar{display:none}
+/* barra in basso */
+nav.tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--blu);gap:8px;padding:6px 10px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -2px 10px rgba(0,0,0,.2)}
+nav.tabbar button{flex:1;max-width:220px;border:0;background:transparent;color:rgba(245,236,215,.6);font:inherit;font-size:.8rem;font-weight:600;padding:7px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav.tabbar{justify-content:center}
+nav.tabbar .i{font-size:1.35rem}
+nav.tabbar button.on{color:var(--crema);background:rgba(255,255,255,.13)}
+body{padding-bottom:84px}
+#toast{bottom:96px}
+#sezGiacenze,#stampa{display:none}
+body[data-vista="giacenze"] #sezGiacenze{display:block}
+body[data-vista="giacenze"] #pannelloForm,body[data-vista="giacenze"] #sezCantina{display:none!important}
+body[data-vista="giacenze"] main{grid-template-columns:1fr;max-width:900px}
+.g-tot{font-family:Georgia,serif;font-size:2rem;font-weight:700;color:var(--blu)}
+.g-tot span{font-size:1rem;color:var(--muted);font-weight:500}
+.g-sub{font-size:.85rem;color:var(--muted);margin:2px 0}
+.g-sub b{color:var(--ink)}
+#gRiepilogo{margin-bottom:12px}
+.g-lista{display:grid;gap:8px;margin-top:12px}
+.g-ref{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer}
+.g-ref:active{background:var(--crema)}
+.g-ref.dacontare{border-style:dashed}
+.g-info{flex:1;min-width:0}
+.g-info b{display:block;color:var(--blu)}
+.g-info span{font-size:.8rem;color:var(--muted)}
+.g-num{text-align:right}
+.g-num b{display:block;font-family:Georgia,serif;font-size:1.35rem;color:var(--blu)}
+.g-num span{font-size:.75rem;color:var(--muted)}
+.g-num .g-da{color:var(--warn);font-weight:700}
+.c-riga{margin:12px 0}
+.stepper{display:flex;gap:8px;align-items:center}
+.stepper button{flex:none;width:52px;height:52px;border:1px solid var(--line);border-radius:12px;background:var(--crema);font-size:1.5rem;color:var(--blu)}
+.stepper input{text-align:center;font-size:1.4rem;font-weight:700;height:52px}
+.c-tot{text-align:center;margin:12px 0;font-size:1.05rem}
+.c-tot b{font-family:Georgia,serif;font-size:1.8rem;color:var(--blu)}
+@media print{
+  body.stampa>*:not(#stampa){display:none!important}
+  body.stampa{padding:0;background:#fff}
+  body.stampa #stampa{display:block}
+}
+#stampa{font-family:Georgia,serif;color:#000;padding:10mm}
+#stampa h1{font-size:18pt;margin:0}
+#stampa .st-sub{font-family:system-ui,sans-serif;font-size:10pt;color:#444;margin:4px 0 12px}
+#stampa table{width:100%;border-collapse:collapse;font-family:system-ui,sans-serif;font-size:9.5pt}
+#stampa th,#stampa td{border-bottom:1px solid #ccc;padding:5px 6px;text-align:left}
+#stampa th{border-bottom:2px solid #0A3745;color:#0A3745}
+#stampa td.n,#stampa th.n{text-align:right}
+#stampa tr.tot td{font-weight:700;border-top:2px solid #0A3745;border-bottom:0}
 @media(max-width:899px){
   nav.tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--blu);gap:8px;padding:6px 10px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -2px 10px rgba(0,0,0,.2)}
   nav.tabbar button{flex:1;border:0;background:transparent;color:rgba(245,236,215,.6);font:inherit;font-size:.8rem;font-weight:600;padding:7px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
@@ -294,7 +339,25 @@ nav.tabbar{display:none}
     </div>
     <div id="lista"></div>
   </section>
+
+  <!-- GIACENZE -->
+  <section id="sezGiacenze">
+    <div class="card">
+      <div class="list-head">
+        <h2>📦 Giacenze</h2>
+        <div class="row">
+          <button class="btn ghost" id="gExcel">📊 Excel</button>
+          <button class="btn ghost" id="gPdf">📄 PDF</button>
+          <button class="btn pri" id="gNuova">➕ Referenza</button>
+        </div>
+      </div>
+      <div id="gRiepilogo"></div>
+      <input type="search" id="gCerca" placeholder="🔍 Cerca vino o annata…">
+    </div>
+    <div id="gLista"></div>
+  </section>
 </main>
+<div id="stampa"></div>
 
 <dialog id="dlgImp">
   <form method="dialog">
@@ -302,6 +365,9 @@ nav.tabbar{display:none}
     <label for="impKey">Chiave API Anthropic</label>
     <input type="password" id="impKey" placeholder="sk-ant-...">
     <p class="hint">Resta salvata solo su questo dispositivo.</p>
+    <label for="impCantina">Nome della cantina (per il PDF delle giacenze)</label>
+    <input id="impCantina" placeholder="Facoltativo">
+    <div style="height:10px"></div>
     <label for="impModel">Modello</label>
     <input id="impModel" placeholder="claude-haiku-4-5">
     <p class="hint">Lascia vuoto per usare claude-haiku-4-5.</p>
@@ -334,8 +400,46 @@ nav.tabbar{display:none}
   </div>
 </dialog>
 
+<dialog id="dlgConta">
+  <div class="rap-head">
+    <div><h2 id="cTitolo" style="margin:0;font-size:1.15rem"></h2><div id="cSotto" class="hint" style="margin:2px 0 0"></div></div>
+    <button type="button" class="iconbtn" id="cX" style="background:var(--crema);color:var(--blu)" aria-label="Chiudi">✕</button>
+  </div>
+  <div class="c-riga"><label for="cCartoni">Cartoni <span id="cPerCart"></span></label>
+    <div class="stepper"><button type="button" data-f="cCartoni" data-d="-1">−</button><input id="cCartoni" inputmode="numeric" placeholder="0"><button type="button" data-f="cCartoni" data-d="1">+</button></div></div>
+  <div class="c-riga"><label for="cSfuse">Bottiglie sfuse</label>
+    <div class="stepper"><button type="button" data-f="cSfuse" data-d="-1">−</button><input id="cSfuse" inputmode="numeric" placeholder="0"><button type="button" data-f="cSfuse" data-d="1">+</button></div></div>
+  <p class="hint">Bottiglie dei cartoni misti: contale come sfuse.</p>
+  <div class="c-tot">Totale <b id="cTotale">0</b> bottiglie</div>
+  <div class="row"><button type="button" class="btn ghost" id="cModifica">✏️ Referenza</button><button type="button" class="btn ghost" id="cSalva">Salva</button></div>
+  <button type="button" class="btn pri wide" id="cSalvaSucc" style="margin-top:8px">Salva e passa alla successiva ›</button>
+</dialog>
+
+<dialog id="dlgRef">
+  <form id="fRef">
+    <h2 id="rTitolo">Nuova referenza</h2>
+    <label for="rDiario">Prendi i dati da una bottiglia del diario (facoltativo)</label>
+    <select id="rDiario"></select>
+    <div style="height:10px"></div>
+    <label for="rNome">Vino *</label>
+    <input id="rNome" autocomplete="off">
+    <div class="grid g2" style="margin-top:10px">
+      <div><label for="rAnnata">Annata</label><input id="rAnnata" inputmode="numeric" maxlength="4"></div>
+      <div><label for="rFormato">Formato</label><select id="rFormato"><option value="0.75">0,75 l</option><option value="1.5">Magnum 1,5 l</option><option value="3">Jeroboam 3 l</option></select></div>
+    </div>
+    <label for="rPerCart">Bottiglie per cartone</label>
+    <input id="rPerCart" inputmode="numeric">
+    <div class="row" style="margin-top:14px">
+      <button type="button" class="btn danger" id="rElimina" hidden>🗑 Elimina</button>
+      <button type="button" class="btn ghost" id="rAnnulla">Annulla</button>
+      <button type="submit" class="btn pri">Salva</button>
+    </div>
+  </form>
+</dialog>
+
 <nav class="tabbar">
   <button type="button" data-vista="cantina"><span class="i">🍷</span>Cantina</button>
+  <button type="button" data-vista="giacenze"><span class="i">📦</span>Giacenze</button>
   <button type="button" data-vista="nuova"><span class="i" id="tabNuovaIco">➕</span><span id="tabNuovaTxt">Nuova</span></button>
 </nav>
 
@@ -345,7 +449,7 @@ nav.tabbar{display:none}
 'use strict';
 const $ = s => document.querySelector(s);
 const MODELLO_DEFAULT = 'claude-haiku-4-5';
-const VERSIONE_APP = 9;
+const VERSIONE_APP = 10;
 const pulisciModello = m => String(m || '').trim().toLowerCase().replace(/\s+/g, '');
 const TIPI = [['Rosso','#8E2A3B'],['Bianco','#E3CF83'],['Rosato','#EE9AA8'],['Bollicine','#D6B571'],['Dolce','#C27A2C']];
 const COLORE = Object.fromEntries(TIPI);
@@ -357,6 +461,7 @@ let db = null;
 if (window.Dexie) {
   db = new Dexie('MementoViniDB');
   db.version(1).stores({ vini: '++id, &uid, stato, dataDegustazione, annata, produttore, regione, tipologia' });
+  db.version(2).stores({ vini: '++id, &uid, stato, dataDegustazione, annata, produttore, regione, tipologia', referenze: '++id, &uid, nome' });
 }
 
 let foto = { fronte: null, retro: null };
@@ -383,6 +488,7 @@ function vista(v) {
   document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('on', b.dataset.vista === v));
   if (window.innerWidth < 900) window.scrollTo(0, 0);
   if (v === 'nuova') requestAnimationFrame(autoAltezzaTutte);
+  if (v === 'giacenze' && db) aggiornaGiacenze();
 }
 function etichettaTab() {
   $('#tabNuovaIco').textContent = editId ? '✏️' : '➕';
@@ -483,6 +589,17 @@ function modificaTesto() {
 function chiaveProduttore(p) {
   return norm(p).replace(/\b(azienda agricola|azienda vitivinicola|az\.? ?agr\.?|societa agricola|soc\.? ?agr\.?|s\.? ?r\.? ?l\.?|s\.? ?s\.?|s\.? ?a\.? ?s\.?|s\.? ?p\.? ?a\.?)(?=\s|$)/g, ' ')
     .replace(/[^a-z0-9]+/g, ' ').trim();
+}
+// "Villa Diamante di Antoine Gaita" finisce nel gruppo "Villa Diamante"
+function mappaProduttori(lista) {
+  const chiavi = [...new Set(lista.map(r => chiaveProduttore(r.produttore)).filter(Boolean))].sort((a, b) => a.length - b.length);
+  const m = new Map(), canon = [];
+  for (const k of chiavi) {
+    const base = canon.find(c => c.length >= 5 && k.startsWith(c + ' '));
+    m.set(k, base || k);
+    if (!base) canon.push(k);
+  }
+  return m;
 }
 function recordVuoto(extra) {
   return { ...Object.fromEntries(CAMPI.map(k => [k, ''])), fotoFronte: null, fotoRetro: null, campiDedotti: [],
@@ -703,7 +820,7 @@ function chiaveGruppo(r, ord) {
     }
     case 'annata': return r.annata || 'Senza annata';
     case 'zona': return r.regione || r.nazione || 'Origine da definire';
-    case 'produttore': return chiaveProduttore(r.produttore) || '';
+    case 'produttore': return r._gp || '';
     default: return null;
   }
 }
@@ -716,7 +833,7 @@ function confronta(ord) {
     zona: (a, b) => vuotoInFondo(a.regione || a.nazione, b.regione || b.nazione) || s(a.regione || a.nazione, b.regione || b.nazione) ||
       vuotoInFondo(a.zona || a.denominazione, b.zona || b.denominazione) || s(a.zona || a.denominazione, b.zona || b.denominazione) ||
       s(a.produttore, b.produttore) || (+b.annata || 0) - (+a.annata || 0),
-    produttore: (a, b) => vuotoInFondo(chiaveProduttore(a.produttore), chiaveProduttore(b.produttore)) || s(chiaveProduttore(a.produttore), chiaveProduttore(b.produttore)) || (+b.annata || 0) - (+a.annata || 0),
+    produttore: (a, b) => vuotoInFondo(a._gp, b._gp) || s(a._gp, b._gp) || (+b.annata || 0) - (+a.annata || 0),
     voto: (a, b) => (parseFloat(b.voto) || -1) - (parseFloat(a.voto) || -1),
     grado: (a, b) => gradoNum(b.gradoAlcolico) - gradoNum(a.gradoAlcolico)
   }[ord];
@@ -746,7 +863,9 @@ function render() {
     if (!termini.length) return true;
     const testo = norm(CAMPI_RICERCA.map(k => r[k]).join(' '));
     return termini.every(t => testo.includes(t));
-  }).sort(confronta(ord));
+  });
+  if (ord === 'produttore') { const m = mappaProduttori(vis); vis.forEach(r => { r._gp = m.get(chiaveProduttore(r.produttore)) || ''; }); }
+  vis.sort(confronta(ord));
   $('#contatore').textContent = `(${vis.length}${vis.length !== cache.length ? ' di ' + cache.length : ''})`;
   if (!vis.length) {
     $('#lista').innerHTML = `<div class="vuoto">${cache.length ? 'Nessuna bottiglia trovata.' : 'La cantina è vuota: fotografa la prima bottiglia!'}</div>`;
@@ -790,8 +909,10 @@ function scarica(blob, nome) {
 }
 async function esporta() {
   const dati = await db.vini.toArray();
-  if (!dati.length) return toast('Niente da esportare');
-  const out = { app: 'Memento Vini', versione: 1, esportato: new Date().toISOString(), vini: dati.map(({ id, ...r }) => r) };
+  const refs = await db.referenze.toArray();
+  if (!dati.length && !refs.length) return toast('Niente da esportare');
+  const out = { app: 'Memento Vini', versione: 2, esportato: new Date().toISOString(),
+    vini: dati.map(({ id, ...r }) => r), referenze: refs.map(({ id, ...r }) => r) };
   scarica(new Blob([JSON.stringify(out)], { type: 'application/json' }), `memento-vini-backup-${oggi()}.json`);
   toast(`Backup di ${dati.length} bottiglie esportato`);
 }
@@ -1003,8 +1124,18 @@ async function leggiCondivisi() {
 async function importa(file) {
   try {
     const j = JSON.parse(await file.text());
-    const arr = Array.isArray(j) ? j : j.vini;
-    if (!Array.isArray(arr)) throw new Error('file non valido');
+    const arr = Array.isArray(j) ? j : (j.vini || []);
+    if (!Array.isArray(arr) || (!arr.length && !Array.isArray(j.referenze))) throw new Error('file non valido');
+    let refNuove = 0;
+    if (Array.isArray(j.referenze)) {
+      const mie = new Map((await db.referenze.toArray()).map(r => [r.uid, r]));
+      for (const r of j.referenze) {
+        const { id, ...x } = r; if (!x.uid) continue;
+        const mia = mie.get(x.uid);
+        if (!mia) { await db.referenze.add(x); refNuove++; }
+        else if ((x.aggiornato || 0) > (mia.aggiornato || 0)) await db.referenze.put({ ...x, id: mia.id });
+      }
+    }
     const esistenti = new Map((await db.vini.toArray()).map(r => [r.uid, r]));
     const nuovi = [];
     let doppi = 0, aggiornati = 0;
@@ -1027,9 +1158,165 @@ async function importa(file) {
     if (nuovi.length) parti.push(nuovi.length === 1 ? '1 bottiglia nuova' : `${nuovi.length} bottiglie nuove`);
     if (aggiornati) parti.push(aggiornati === 1 ? '1 aggiornata' : `${aggiornati} aggiornate`);
     if (doppi) parti.push(`${doppi} già uguali`);
+    if (refNuove) parti.push(`${refNuove} referenze di giacenza`);
     toast(parti.length ? 'Import: ' + parti.join(' · ') : 'Niente da importare');
     await aggiorna();
   } catch (e) { toast('Import fallito: ' + e.message); }
+}
+
+/* ---------- giacenze ---------- */
+const FORMATI = {
+  '0.75': { nome: '0,75 l', litri: 0.75, cartone: 6 },
+  '1.5': { nome: 'Magnum 1,5 l', litri: 1.5, cartone: 3 },
+  '3': { nome: 'Jeroboam 3 l', litri: 3, cartone: 1 }
+};
+let refCache = [], refConta = null, refModifica = null;
+const fmtN = (n, d = 0) => Number(n || 0).toLocaleString('it-IT', { maximumFractionDigits: d });
+const intero = v => { const n = parseInt(String(v ?? '').replace(/\D/g, ''), 10); return isFinite(n) ? n : 0; };
+const totaleRef = r => intero(r.cartoni) * intero(r.perCartone) + intero(r.sfuse);
+const litriRef = r => totaleRef(r) * (FORMATI[r.formato]?.litri || 0);
+const etichettaRef = r => [r.annata || 's.a.', FORMATI[r.formato]?.nome || r.formato].join(' · ');
+function ordinaRef(a, b) {
+  return (a.nome || '').localeCompare(b.nome || '', 'it', { sensitivity: 'base' }) || (+b.annata || 0) - (+a.annata || 0) || parseFloat(a.formato) - parseFloat(b.formato);
+}
+async function aggiornaGiacenze() { refCache = (await db.referenze.toArray()).sort(ordinaRef); renderGiacenze(); }
+function refVisibili() {
+  const t = norm($('#gCerca').value).split(/\s+/).filter(Boolean);
+  return refCache.filter(r => { const x = norm([r.nome, r.annata, FORMATI[r.formato]?.nome].join(' ')); return t.every(p => x.includes(p)); });
+}
+function riepilogoGiacenze() {
+  const perF = {}; let bott = 0, litri = 0, ultimo = 0;
+  for (const r of refCache) {
+    const n = totaleRef(r); bott += n; litri += litriRef(r);
+    perF[r.formato] = (perF[r.formato] || 0) + n;
+    if ((r.contatoIl || 0) > ultimo) ultimo = r.contatoIl;
+  }
+  return { perF, bott, litri, ultimo };
+}
+function renderGiacenze() {
+  const { perF, bott, litri, ultimo } = riepilogoGiacenze();
+  const daContare = refCache.filter(r => !r.contatoIl).length;
+  $('#gRiepilogo').innerHTML = refCache.length ? `<div class="g-tot">${fmtN(bott)} <span>bottiglie</span></div>
+    <div class="g-sub">${Object.keys(FORMATI).filter(f => perF[f]).map(f => `${FORMATI[f].nome}: <b>${fmtN(perF[f])}</b>`).join(' · ') || '—'}</div>
+    <div class="g-sub">Litri totali: <b>${fmtN(litri, 2)}</b> · ${refCache.length} referenze${daContare ? ` · <b style="color:var(--warn)">${daContare} da contare</b>` : ''}</div>
+    ${ultimo ? `<div class="g-sub">Ultimo conteggio: ${new Date(ultimo).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}</div>` : ''}` : '';
+  const vis = refVisibili();
+  $('#gLista').innerHTML = vis.length ? '<div class="g-lista">' + vis.map(r => `<div class="g-ref${r.contatoIl ? '' : ' dacontare'}" data-id="${r.id}">
+      <div class="g-info"><b>${esc(r.nome)}</b><span>${esc(etichettaRef(r))}</span></div>
+      <div class="g-num">${r.contatoIl ? `<b>${fmtN(totaleRef(r))}</b><span>${fmtN(intero(r.cartoni))} cart. × ${intero(r.perCartone)} + ${fmtN(intero(r.sfuse))}</span>` : '<span class="g-da">da contare</span>'}</div>
+    </div>`).join('') + '</div>'
+    : `<div class="vuoto">${refCache.length ? 'Nessuna referenza trovata.' : 'Nessuna referenza ancora: premi ➕ Referenza per iniziare.'}</div>`;
+}
+// conteggio
+function apriConta(id) {
+  const r = refCache.find(x => x.id === id); if (!r) return;
+  refConta = id;
+  $('#cTitolo').textContent = r.nome;
+  $('#cSotto').textContent = etichettaRef(r);
+  $('#cPerCart').textContent = `(da ${intero(r.perCartone)})`;
+  $('#cCartoni').value = r.contatoIl ? intero(r.cartoni) : '';
+  $('#cSfuse').value = r.contatoIl ? intero(r.sfuse) : '';
+  calcolaConta();
+  if (!$('#dlgConta').open) $('#dlgConta').showModal();
+  setTimeout(() => $('#cCartoni').focus(), 50);
+}
+function calcolaConta() {
+  const r = refCache.find(x => x.id === refConta); if (!r) return;
+  $('#cTotale').textContent = fmtN(intero($('#cCartoni').value) * intero(r.perCartone) + intero($('#cSfuse').value));
+}
+async function salvaConta(successiva) {
+  const r = refCache.find(x => x.id === refConta); if (!r) return;
+  const cartoni = intero($('#cCartoni').value), sfuse = intero($('#cSfuse').value);
+  await db.referenze.update(r.id, { cartoni, sfuse, totale: cartoni * intero(r.perCartone) + sfuse, contatoIl: Date.now(), aggiornato: Date.now() });
+  const ordine = refVisibili().map(x => x.id);
+  await aggiornaGiacenze();
+  if (successiva) {
+    const prossimo = ordine[ordine.indexOf(r.id) + 1];
+    if (prossimo != null) return apriConta(prossimo);
+    toast('Conteggio completato: era l\'ultima referenza');
+  } else toast('Conteggio salvato');
+  $('#dlgConta').close();
+}
+// referenze
+async function apriRef(id) {
+  refModifica = id ?? null;
+  const r = id != null ? refCache.find(x => x.id === id) : null;
+  $('#rTitolo').textContent = r ? 'Modifica referenza' : 'Nuova referenza';
+  const vini = cache.filter(v => v.produttore || v.nomeVino).sort((a, b) => (a.produttore || '').localeCompare(b.produttore || '', 'it') || (+b.annata || 0) - (+a.annata || 0));
+  $('#rDiario').innerHTML = '<option value="">—</option>' + vini.map(v => `<option value="${v.id}">${esc([v.produttore, v.nomeVino, v.annata].filter(Boolean).join(' – '))}</option>`).join('');
+  $('#rNome').value = r?.nome || '';
+  $('#rAnnata').value = r?.annata || '';
+  $('#rFormato').value = r?.formato || '0.75';
+  $('#rPerCart').value = r ? intero(r.perCartone) : FORMATI['0.75'].cartone;
+  $('#rElimina').hidden = !r;
+  $('#dlgRef').showModal();
+}
+async function salvaRef(e) {
+  e.preventDefault();
+  const nome = $('#rNome').value.replace(/\s+/g, ' ').trim();
+  if (!nome) { $('#rNome').focus(); return toast('Scrivi il nome del vino'); }
+  const annata = ($('#rAnnata').value.match(/\d{4}/) || [''])[0];
+  const formato = $('#rFormato').value;
+  const perCartone = Math.max(1, intero($('#rPerCart').value) || FORMATI[formato].cartone);
+  const doppia = refCache.find(x => x.id !== refModifica && norm(x.nome) === norm(nome) && (x.annata || '') === annata && x.formato === formato);
+  if (doppia) return toast('Questa referenza esiste già');
+  if (refModifica != null) {
+    await db.referenze.update(refModifica, { nome, annata, formato, perCartone, aggiornato: Date.now() });
+    $('#dlgRef').close(); await aggiornaGiacenze();
+    if ($('#dlgConta').open) apriConta(refModifica);
+    return toast('Referenza aggiornata');
+  }
+  const id = await db.referenze.add({ uid: uid(), nome, annata, formato, perCartone, cartoni: 0, sfuse: 0, totale: 0, contatoIl: null, creato: Date.now(), aggiornato: Date.now() });
+  $('#dlgRef').close(); await aggiornaGiacenze();
+  apriConta(id); // subito al conteggio
+}
+async function eliminaRef() {
+  if (refModifica == null || !confirm('Eliminare questa referenza e il suo conteggio?')) return;
+  await db.referenze.delete(refModifica);
+  $('#dlgRef').close(); if ($('#dlgConta').open) $('#dlgConta').close();
+  await aggiornaGiacenze(); toast('Referenza eliminata');
+}
+// esportazione
+const nomeCantina = () => (localStorage.getItem('mv_cantina') || '').trim();
+function fileGiacenze(est) {
+  const c = norm(nomeCantina()).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return `giacenze${c ? '-' + c : ''}-${oggi()}.${est}`;
+}
+async function condividiFile(file, testo) {
+  try {
+    if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: file.name, text: testo }); return; }
+  } catch (e) { if (e.name === 'AbortError') return; }
+  scarica(file, file.name); toast('File salvato nei Download');
+}
+async function esportaExcel() {
+  await aggiornaGiacenze();
+  if (!refCache.length) return toast('Nessuna giacenza da esportare');
+  const q = v => { const t = String(v ?? ''); return /[;"\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+  const dec = n => String(Math.round(n * 100) / 100).replace('.', ',');
+  const righe = [['Vino', 'Annata', 'Formato', 'Litri per bottiglia', 'Bottiglie per cartone', 'Cartoni', 'Bottiglie sfuse', 'Totale bottiglie', 'Litri totali', 'Ultimo conteggio']];
+  for (const r of refCache) righe.push([r.nome, r.annata || 's.a.', FORMATI[r.formato]?.nome || r.formato, dec(FORMATI[r.formato]?.litri || 0), intero(r.perCartone),
+    intero(r.cartoni), intero(r.sfuse), totaleRef(r), dec(litriRef(r)), r.contatoIl ? new Date(r.contatoIl).toLocaleString('it-IT') : 'non contata']);
+  const { bott, litri } = riepilogoGiacenze();
+  righe.push(['TOTALE', '', '', '', '', '', '', bott, dec(litri), '']);
+  const csv = '\ufeff' + (nomeCantina() ? q(nomeCantina()) + ' – Giacenze al ' + new Date().toLocaleDateString('it-IT') + '\r\n\r\n' : '') + righe.map(r => r.map(q).join(';')).join('\r\n');
+  await condividiFile(new File([csv], fileGiacenze('csv'), { type: 'text/csv' }), `Giacenze al ${new Date().toLocaleDateString('it-IT')}`);
+}
+async function stampaPdf() {
+  await aggiornaGiacenze();
+  if (!refCache.length) return toast('Nessuna giacenza da stampare');
+  const { perF, bott, litri } = riepilogoGiacenze();
+  $('#stampa').innerHTML = `<h1>${esc(nomeCantina() || 'Giacenze di cantina')}</h1>
+    <div class="st-sub">${nomeCantina() ? 'Giacenze di cantina · ' : ''}al ${new Date().toLocaleDateString('it-IT')} · ${fmtN(bott)} bottiglie · ${fmtN(litri, 2)} litri
+    ${Object.keys(FORMATI).filter(f => perF[f]).map(f => ` · ${FORMATI[f].nome}: ${fmtN(perF[f])}`).join('')}</div>
+    <table><thead><tr><th>Vino</th><th>Annata</th><th>Formato</th><th class="n">Cartoni</th><th class="n">Sfuse</th><th class="n">Bottiglie</th><th class="n">Litri</th></tr></thead><tbody>
+    ${refCache.map(r => `<tr><td>${esc(r.nome)}</td><td>${esc(r.annata || 's.a.')}</td><td>${esc(FORMATI[r.formato]?.nome || r.formato)}</td>
+      <td class="n">${fmtN(intero(r.cartoni))} × ${intero(r.perCartone)}</td><td class="n">${fmtN(intero(r.sfuse))}</td><td class="n">${fmtN(totaleRef(r))}</td><td class="n">${fmtN(litriRef(r), 2)}</td></tr>`).join('')}
+    <tr class="tot"><td colspan="5">Totale</td><td class="n">${fmtN(bott)}</td><td class="n">${fmtN(litri, 2)}</td></tr></tbody></table>`;
+  document.body.classList.add('stampa');
+  const fine = () => { document.body.classList.remove('stampa'); window.removeEventListener('afterprint', fine); };
+  window.addEventListener('afterprint', fine);
+  setTimeout(() => { window.print(); setTimeout(fine, 1000); }, 50);
+  toast('Nella stampa scegli "Salva come PDF", poi condividilo');
 }
 
 /* ---------- impostazioni ---------- */
@@ -1037,6 +1324,7 @@ function apriImpostazioni() {
   $('#impKey').value = localStorage.getItem('mv_api_key') || '';
   $('#impModel').value = localStorage.getItem('mv_model') || '';
   $('#versioneApp').textContent = VERSIONE_APP;
+  $('#impCantina').value = localStorage.getItem('mv_cantina') || '';
   $('#dlgImp').showModal();
 }
 
@@ -1081,6 +1369,29 @@ async function init() {
   $('#btnElimina').addEventListener('click', elimina);
   $('#btnCondividi').addEventListener('click', condividi);
   $('#btnRapido').addEventListener('click', apriRapido);
+  // giacenze
+  $('#gNuova').addEventListener('click', () => apriRef(null));
+  $('#gExcel').addEventListener('click', esportaExcel);
+  $('#gPdf').addEventListener('click', stampaPdf);
+  $('#gCerca').addEventListener('input', renderGiacenze);
+  $('#gLista').addEventListener('click', e => { const g = e.target.closest('.g-ref'); if (g) apriConta(+g.dataset.id); });
+  ['cCartoni', 'cSfuse'].forEach(k => $('#' + k).addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); calcolaConta(); }));
+  document.querySelectorAll('.stepper button').forEach(b => b.addEventListener('click', () => {
+    const inp = $('#' + b.dataset.f); inp.value = Math.max(0, intero(inp.value) + +b.dataset.d); calcolaConta();
+  }));
+  $('#cSalva').addEventListener('click', () => salvaConta(false));
+  $('#cSalvaSucc').addEventListener('click', () => salvaConta(true));
+  $('#cX').addEventListener('click', () => $('#dlgConta').close());
+  $('#cModifica').addEventListener('click', () => apriRef(refConta));
+  $('#fRef').addEventListener('submit', salvaRef);
+  $('#rAnnulla').addEventListener('click', () => $('#dlgRef').close());
+  $('#rElimina').addEventListener('click', eliminaRef);
+  $('#rFormato').addEventListener('change', () => { $('#rPerCart').value = FORMATI[$('#rFormato').value].cartone; });
+  $('#rDiario').addEventListener('change', () => {
+    const v = cache.find(x => x.id === +$('#rDiario').value); if (!v) return;
+    $('#rNome').value = [v.nomeVino, v.denominazione].filter(Boolean).join(' – ') || v.produttore || '';
+    $('#rAnnata').value = v.annata || '';
+  });
   document.querySelectorAll('.anteprima').forEach(a => {
     a.addEventListener('click', () => apriTesto(a.dataset.for));
     a.addEventListener('keydown', e => { if (e.key === 'Enter') apriTesto(a.dataset.for); });
@@ -1126,6 +1437,7 @@ async function init() {
   $('#dlgImp').addEventListener('close', () => {
     if ($('#dlgImp').returnValue !== 'ok') return;
     localStorage.setItem('mv_api_key', $('#impKey').value.trim());
+    localStorage.setItem('mv_cantina', $('#impCantina').value.trim());
     const m = pulisciModello($('#impModel').value);
     m ? localStorage.setItem('mv_model', m) : localStorage.removeItem('mv_model');
     toast('Impostazioni salvate');
