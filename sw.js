@@ -1,6 +1,6 @@
 // Service worker di Memento Vini.
 // Quando modifichi index.html, aumenta il numero di versione qui sotto per forzare l'aggiornamento.
-const CACHE = 'memento-vini-v8';
+const CACHE = 'memento-vini-v9';
 const DEXIE = 'https://unpkg.com/dexie@4.0.8/dist/dexie.min.js';
 const INBOX = 'mv-inbox'; // file ricevuti con "Condividi → Memento Vini"
 const FILE_LOCALI =['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png'];
@@ -8,7 +8,8 @@ const FILE_LOCALI =['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-5
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    await cache.addAll(FILE_LOCALI);
+    // cache: 'reload' = scarica sempre la copia fresca, mai quella in memoria del browser
+    await cache.addAll(FILE_LOCALI.map(u => new Request(u, { cache: 'reload' })));
     try { await cache.add(new Request(DEXIE, { mode: 'cors' })); } catch (e) { /* verrà salvato al primo caricamento */ }
     await self.skipWaiting();
   })());
@@ -53,22 +54,32 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
   if (url.hostname === 'api.anthropic.com') return; // le chiamate AI vanno sempre in rete
 
+  // pagina dell'app: prima la rete (versione sempre aggiornata), la copia salvata solo se offline
+  if (req.mode === 'navigate') {
+    event.respondWith((async () => {
+      try {
+        const res = await fetch(req, { cache: 'no-store' });
+        if (res.ok) { const c = await caches.open(CACHE); await c.put('index.html', res.clone()); }
+        return res;
+      } catch (e) {
+        return (await caches.match('index.html')) || (await caches.match('./')) || Response.error();
+      }
+    })());
+    return;
+  }
+
+  // altri file: risposta dalla cache e aggiornamento in background
   event.respondWith((async () => {
     const inCache = await caches.match(req, { ignoreSearch: true });
     if (inCache) {
-      // file locali: risposta immediata dalla cache e aggiornamento in background
       if (url.origin === self.location.origin) {
-        event.waitUntil(fetch(req).then(res => salvaInCache(req, res)).catch(() => {}));
+        event.waitUntil(fetch(req, { cache: 'no-cache' }).then(res => salvaInCache(req, res)).catch(() => {}));
       }
       return inCache;
     }
     try {
       return await salvaInCache(req, await fetch(req));
     } catch (e) {
-      if (req.mode === 'navigate') {
-        const pagina = await caches.match('index.html');
-        if (pagina) return pagina;
-      }
       return Response.error();
     }
   })());

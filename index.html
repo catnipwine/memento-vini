@@ -305,6 +305,7 @@ nav.tabbar{display:none}
     <label for="impModel">Modello</label>
     <input id="impModel" placeholder="claude-haiku-4-5">
     <p class="hint">Lascia vuoto per usare claude-haiku-4-5.</p>
+    <p class="hint" style="text-align:right">Memento Vini · versione <span id="versioneApp"></span></p>
     <div class="row">
       <button class="btn ghost" value="annulla">Annulla</button>
       <button class="btn pri" value="ok">Salva</button>
@@ -344,6 +345,8 @@ nav.tabbar{display:none}
 'use strict';
 const $ = s => document.querySelector(s);
 const MODELLO_DEFAULT = 'claude-haiku-4-5';
+const VERSIONE_APP = 9;
+const pulisciModello = m => String(m || '').trim().toLowerCase().replace(/\s+/g, '');
 const TIPI = [['Rosso','#8E2A3B'],['Bianco','#E3CF83'],['Rosato','#EE9AA8'],['Bollicine','#D6B571'],['Dolce','#C27A2C']];
 const COLORE = Object.fromEntries(TIPI);
 const CAMPI = ['produttore','nomeVino','tipologia','annata','vitigni','gradoAlcolico','nazione','regione','provincia','comune','zona','denominazione','sottozona','dataDegustazione','luogo','voto','prezzo','noteVista','noteOlfatto','noteGusto','noteAltro','storiaProduttore','caratteristiche','noteClima'];
@@ -579,7 +582,7 @@ Regole:
 async function chiamaAI(fronte, retro) {
   const key = localStorage.getItem('mv_api_key');
   if (!key) throw new Error('Chiave API mancante (apri ⚙️)');
-  const model = localStorage.getItem('mv_model') || MODELLO_DEFAULT;
+  const model = pulisciModello(localStorage.getItem('mv_model')) || MODELLO_DEFAULT;
   const content = [];
   for (const [nome, f] of [['FRONTE', fronte], ['RETRO', retro]]) {
     if (!f) continue;
@@ -1033,6 +1036,7 @@ async function importa(file) {
 function apriImpostazioni() {
   $('#impKey').value = localStorage.getItem('mv_api_key') || '';
   $('#impModel').value = localStorage.getItem('mv_model') || '';
+  $('#versioneApp').textContent = VERSIONE_APP;
   $('#dlgImp').showModal();
 }
 
@@ -1122,7 +1126,7 @@ async function init() {
   $('#dlgImp').addEventListener('close', () => {
     if ($('#dlgImp').returnValue !== 'ok') return;
     localStorage.setItem('mv_api_key', $('#impKey').value.trim());
-    const m = $('#impModel').value.trim();
+    const m = pulisciModello($('#impModel').value);
     m ? localStorage.setItem('mv_model', m) : localStorage.removeItem('mv_model');
     toast('Impostazioni salvate');
   });
@@ -1133,7 +1137,7 @@ async function init() {
   window.addEventListener('offline', () => { aggiornaBanner(); render(); });
 
   if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW non registrato', err));
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => reg.update()).catch(err => console.warn('SW non registrato', err));
 
   nuovaScheda();
   await aggiorna();
