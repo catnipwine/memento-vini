@@ -427,10 +427,14 @@ body[data-vista="giacenze"] main{grid-template-columns:1fr;max-width:900px}
       <div><label for="rAnnata">Annata</label><input id="rAnnata" inputmode="numeric" maxlength="4"></div>
       <div><label for="rFormato">Formato</label><select id="rFormato"><option value="0.75">0,75 l</option><option value="1.5">Magnum 1,5 l</option><option value="3">Jeroboam 3 l</option></select></div>
     </div>
+    <label for="rLotto">Lotto</label>
+    <input id="rLotto" autocomplete="off" autocapitalize="characters">
+    <div style="height:10px"></div>
     <label for="rPerCart">Bottiglie per cartone</label>
     <input id="rPerCart" inputmode="numeric">
     <div class="row" style="margin-top:14px">
       <button type="button" class="btn danger" id="rElimina" hidden>🗑 Elimina</button>
+      <button type="button" class="btn oro" id="rNuovoLotto" hidden>➕ Nuovo lotto</button>
       <button type="button" class="btn ghost" id="rAnnulla">Annulla</button>
       <button type="submit" class="btn pri">Salva</button>
     </div>
@@ -449,7 +453,7 @@ body[data-vista="giacenze"] main{grid-template-columns:1fr;max-width:900px}
 'use strict';
 const $ = s => document.querySelector(s);
 const MODELLO_DEFAULT = 'claude-haiku-4-5';
-const VERSIONE_APP = 10;
+const VERSIONE_APP = 11;
 const pulisciModello = m => String(m || '').trim().toLowerCase().replace(/\s+/g, '');
 const TIPI = [['Rosso','#8E2A3B'],['Bianco','#E3CF83'],['Rosato','#EE9AA8'],['Bollicine','#D6B571'],['Dolce','#C27A2C']];
 const COLORE = Object.fromEntries(TIPI);
@@ -1170,19 +1174,19 @@ const FORMATI = {
   '1.5': { nome: 'Magnum 1,5 l', litri: 1.5, cartone: 3 },
   '3': { nome: 'Jeroboam 3 l', litri: 3, cartone: 1 }
 };
-let refCache = [], refConta = null, refModifica = null;
+let refCache = [], refConta = null, refModifica = null, modoNuovoLotto = false;
 const fmtN = (n, d = 0) => Number(n || 0).toLocaleString('it-IT', { maximumFractionDigits: d });
 const intero = v => { const n = parseInt(String(v ?? '').replace(/\D/g, ''), 10); return isFinite(n) ? n : 0; };
 const totaleRef = r => intero(r.cartoni) * intero(r.perCartone) + intero(r.sfuse);
 const litriRef = r => totaleRef(r) * (FORMATI[r.formato]?.litri || 0);
-const etichettaRef = r => [r.annata || 's.a.', FORMATI[r.formato]?.nome || r.formato].join(' · ');
+const etichettaRef = r => [r.annata || 's.a.', r.lotto && 'Lotto ' + r.lotto, FORMATI[r.formato]?.nome || r.formato].filter(Boolean).join(' · ');
 function ordinaRef(a, b) {
-  return (a.nome || '').localeCompare(b.nome || '', 'it', { sensitivity: 'base' }) || (+b.annata || 0) - (+a.annata || 0) || parseFloat(a.formato) - parseFloat(b.formato);
+  return (a.nome || '').localeCompare(b.nome || '', 'it', { sensitivity: 'base' }) || (+b.annata || 0) - (+a.annata || 0) || parseFloat(a.formato) - parseFloat(b.formato) || (a.lotto || '').localeCompare(b.lotto || '', 'it', { numeric: true });
 }
 async function aggiornaGiacenze() { refCache = (await db.referenze.toArray()).sort(ordinaRef); renderGiacenze(); }
 function refVisibili() {
   const t = norm($('#gCerca').value).split(/\s+/).filter(Boolean);
-  return refCache.filter(r => { const x = norm([r.nome, r.annata, FORMATI[r.formato]?.nome].join(' ')); return t.every(p => x.includes(p)); });
+  return refCache.filter(r => { const x = norm([r.nome, r.annata, r.lotto, FORMATI[r.formato]?.nome].join(' ')); return t.every(p => x.includes(p)); });
 }
 function riepilogoGiacenze() {
   const perF = {}; let bott = 0, litri = 0, ultimo = 0;
@@ -1239,7 +1243,7 @@ async function salvaConta(successiva) {
 }
 // referenze
 async function apriRef(id) {
-  refModifica = id ?? null;
+  refModifica = id ?? null; modoNuovoLotto = false;
   const r = id != null ? refCache.find(x => x.id === id) : null;
   $('#rTitolo').textContent = r ? 'Modifica referenza' : 'Nuova referenza';
   const vini = cache.filter(v => v.produttore || v.nomeVino).sort((a, b) => (a.produttore || '').localeCompare(b.produttore || '', 'it') || (+b.annata || 0) - (+a.annata || 0));
@@ -1247,8 +1251,10 @@ async function apriRef(id) {
   $('#rNome').value = r?.nome || '';
   $('#rAnnata').value = r?.annata || '';
   $('#rFormato').value = r?.formato || '0.75';
+  $('#rLotto').value = r?.lotto || '';
   $('#rPerCart').value = r ? intero(r.perCartone) : FORMATI['0.75'].cartone;
   $('#rElimina').hidden = !r;
+  $('#rNuovoLotto').hidden = !r;
   $('#dlgRef').showModal();
 }
 async function salvaRef(e) {
@@ -1257,18 +1263,28 @@ async function salvaRef(e) {
   if (!nome) { $('#rNome').focus(); return toast('Scrivi il nome del vino'); }
   const annata = ($('#rAnnata').value.match(/\d{4}/) || [''])[0];
   const formato = $('#rFormato').value;
+  const lotto = $('#rLotto').value.replace(/\s+/g, ' ').trim();
+  if (modoNuovoLotto && !lotto) { $('#rLotto').focus(); return toast('Scrivi il numero del nuovo lotto'); }
   const perCartone = Math.max(1, intero($('#rPerCart').value) || FORMATI[formato].cartone);
-  const doppia = refCache.find(x => x.id !== refModifica && norm(x.nome) === norm(nome) && (x.annata || '') === annata && x.formato === formato);
-  if (doppia) return toast('Questa referenza esiste già');
+  const doppia = refCache.find(x => x.id !== refModifica && norm(x.nome) === norm(nome) && (x.annata || '') === annata && x.formato === formato && norm(x.lotto) === norm(lotto));
+  if (doppia) return toast(lotto ? 'Questo lotto esiste già' : 'Questa referenza esiste già: se è un altro imbottigliamento, scrivi il lotto');
   if (refModifica != null) {
-    await db.referenze.update(refModifica, { nome, annata, formato, perCartone, aggiornato: Date.now() });
+    await db.referenze.update(refModifica, { nome, annata, formato, lotto, perCartone, aggiornato: Date.now() });
     $('#dlgRef').close(); await aggiornaGiacenze();
     if ($('#dlgConta').open) apriConta(refModifica);
     return toast('Referenza aggiornata');
   }
-  const id = await db.referenze.add({ uid: uid(), nome, annata, formato, perCartone, cartoni: 0, sfuse: 0, totale: 0, contatoIl: null, creato: Date.now(), aggiornato: Date.now() });
+  const id = await db.referenze.add({ uid: uid(), nome, annata, formato, lotto, perCartone, cartoni: 0, sfuse: 0, totale: 0, contatoIl: null, creato: Date.now(), aggiornato: Date.now() });
   $('#dlgRef').close(); await aggiornaGiacenze();
   apriConta(id); // subito al conteggio
+}
+function nuovoLotto() { // copia della referenza, con lotto e conteggio da compilare
+  refModifica = null; modoNuovoLotto = true;
+  $('#rTitolo').textContent = 'Nuovo lotto';
+  $('#rLotto').value = '';
+  $('#rElimina').hidden = true; $('#rNuovoLotto').hidden = true;
+  if ($('#dlgConta').open) $('#dlgConta').close();
+  $('#rLotto').focus();
 }
 async function eliminaRef() {
   if (refModifica == null || !confirm('Eliminare questa referenza e il suo conteggio?')) return;
@@ -1293,11 +1309,11 @@ async function esportaExcel() {
   if (!refCache.length) return toast('Nessuna giacenza da esportare');
   const q = v => { const t = String(v ?? ''); return /[;"\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
   const dec = n => String(Math.round(n * 100) / 100).replace('.', ',');
-  const righe = [['Vino', 'Annata', 'Formato', 'Litri per bottiglia', 'Bottiglie per cartone', 'Cartoni', 'Bottiglie sfuse', 'Totale bottiglie', 'Litri totali', 'Ultimo conteggio']];
-  for (const r of refCache) righe.push([r.nome, r.annata || 's.a.', FORMATI[r.formato]?.nome || r.formato, dec(FORMATI[r.formato]?.litri || 0), intero(r.perCartone),
+  const righe = [['Vino', 'Annata', 'Lotto', 'Formato', 'Litri per bottiglia', 'Bottiglie per cartone', 'Cartoni', 'Bottiglie sfuse', 'Totale bottiglie', 'Litri totali', 'Ultimo conteggio']];
+  for (const r of refCache) righe.push([r.nome, r.annata || 's.a.', r.lotto || '', FORMATI[r.formato]?.nome || r.formato, dec(FORMATI[r.formato]?.litri || 0), intero(r.perCartone),
     intero(r.cartoni), intero(r.sfuse), totaleRef(r), dec(litriRef(r)), r.contatoIl ? new Date(r.contatoIl).toLocaleString('it-IT') : 'non contata']);
   const { bott, litri } = riepilogoGiacenze();
-  righe.push(['TOTALE', '', '', '', '', '', '', bott, dec(litri), '']);
+  righe.push(['TOTALE', '', '', '', '', '', '', '', bott, dec(litri), '']);
   const csv = '\ufeff' + (nomeCantina() ? q(nomeCantina()) + ' – Giacenze al ' + new Date().toLocaleDateString('it-IT') + '\r\n\r\n' : '') + righe.map(r => r.map(q).join(';')).join('\r\n');
   await condividiFile(new File([csv], fileGiacenze('csv'), { type: 'text/csv' }), `Giacenze al ${new Date().toLocaleDateString('it-IT')}`);
 }
@@ -1308,10 +1324,10 @@ async function stampaPdf() {
   $('#stampa').innerHTML = `<h1>${esc(nomeCantina() || 'Giacenze di cantina')}</h1>
     <div class="st-sub">${nomeCantina() ? 'Giacenze di cantina · ' : ''}al ${new Date().toLocaleDateString('it-IT')} · ${fmtN(bott)} bottiglie · ${fmtN(litri, 2)} litri
     ${Object.keys(FORMATI).filter(f => perF[f]).map(f => ` · ${FORMATI[f].nome}: ${fmtN(perF[f])}`).join('')}</div>
-    <table><thead><tr><th>Vino</th><th>Annata</th><th>Formato</th><th class="n">Cartoni</th><th class="n">Sfuse</th><th class="n">Bottiglie</th><th class="n">Litri</th></tr></thead><tbody>
-    ${refCache.map(r => `<tr><td>${esc(r.nome)}</td><td>${esc(r.annata || 's.a.')}</td><td>${esc(FORMATI[r.formato]?.nome || r.formato)}</td>
+    <table><thead><tr><th>Vino</th><th>Annata</th><th>Lotto</th><th>Formato</th><th class="n">Cartoni</th><th class="n">Sfuse</th><th class="n">Bottiglie</th><th class="n">Litri</th></tr></thead><tbody>
+    ${refCache.map(r => `<tr><td>${esc(r.nome)}</td><td>${esc(r.annata || 's.a.')}</td><td>${esc(r.lotto || '')}</td><td>${esc(FORMATI[r.formato]?.nome || r.formato)}</td>
       <td class="n">${fmtN(intero(r.cartoni))} × ${intero(r.perCartone)}</td><td class="n">${fmtN(intero(r.sfuse))}</td><td class="n">${fmtN(totaleRef(r))}</td><td class="n">${fmtN(litriRef(r), 2)}</td></tr>`).join('')}
-    <tr class="tot"><td colspan="5">Totale</td><td class="n">${fmtN(bott)}</td><td class="n">${fmtN(litri, 2)}</td></tr></tbody></table>`;
+    <tr class="tot"><td colspan="6">Totale</td><td class="n">${fmtN(bott)}</td><td class="n">${fmtN(litri, 2)}</td></tr></tbody></table>`;
   document.body.classList.add('stampa');
   const fine = () => { document.body.classList.remove('stampa'); window.removeEventListener('afterprint', fine); };
   window.addEventListener('afterprint', fine);
@@ -1386,6 +1402,7 @@ async function init() {
   $('#fRef').addEventListener('submit', salvaRef);
   $('#rAnnulla').addEventListener('click', () => $('#dlgRef').close());
   $('#rElimina').addEventListener('click', eliminaRef);
+  $('#rNuovoLotto').addEventListener('click', nuovoLotto);
   $('#rFormato').addEventListener('change', () => { $('#rPerCart').value = FORMATI[$('#rFormato').value].cartone; });
   $('#rDiario').addEventListener('change', () => {
     const v = cache.find(x => x.id === +$('#rDiario').value); if (!v) return;
